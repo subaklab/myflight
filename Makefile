@@ -275,9 +275,7 @@ HIGHEND_SRC = \
 		   telemetry/smartport.c \
 		   sensors/sonar.c \
 		   sensors/barometer.c \
-		   blackbox/blackbox.c \
-		   blackbox/blackbox_io.c
-
+		   
 VCP_SRC = \
 		   vcp/hw_config.c \
 		   vcp/stm32_it.c \
@@ -421,8 +419,6 @@ CJMCU_SRC = \
 		   drivers/timer_stm32f10x.c \
 		   hardware_revision.c \
 		   flight/gtune.c \
-		   blackbox/blackbox.c \
-		   blackbox/blackbox_io.c \
 		   $(COMMON_SRC)
 
 CC3D_SRC = \

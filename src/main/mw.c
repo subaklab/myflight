@@ -64,7 +64,6 @@
 #include "rx/msp.h"
 
 #include "telemetry/telemetry.h"
-#include "blackbox/blackbox.h"
 
 #include "flight/mixer.h"
 #include "flight/pid.h"
@@ -301,12 +300,6 @@ void mwDisarm(void)
     if (ARMING_FLAG(ARMED)) {
         DISABLE_ARMING_FLAG(ARMED);
 
-#ifdef BLACKBOX
-        if (feature(FEATURE_BLACKBOX)) {
-            finishBlackbox();
-        }
-#endif
-
         beeper(BEEPER_DISARMING);      // emit disarm tone
     }
 }
@@ -334,15 +327,6 @@ void mwArm(void)
             ENABLE_ARMING_FLAG(ARMED);
             headFreeModeHold = heading;
 
-#ifdef BLACKBOX
-            if (feature(FEATURE_BLACKBOX)) {
-                serialPort_t *sharedBlackboxAndMspPort = findSharedSerialPort(FUNCTION_BLACKBOX, FUNCTION_MSP);
-                if (sharedBlackboxAndMspPort) {
-                    mspReleasePortIfAllocated(sharedBlackboxAndMspPort);
-                }
-                startBlackbox();
-            }
-#endif
             disarmAt = millis() + masterConfig.auto_disarm_delay * 1000;   // start disarm timeout, will be extended when throttle is nonzero
 
             //beep to indicate arming
@@ -843,11 +827,6 @@ void loop(void)
             writeMotors();
         }
 
-#ifdef BLACKBOX
-        if (!cliMode && feature(FEATURE_BLACKBOX)) {
-            handleBlackbox();
-        }
-#endif
     }
 
 #ifdef TELEMETRY

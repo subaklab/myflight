@@ -71,7 +71,6 @@
 #include "sensors/initialisation.h"
 
 #include "telemetry/telemetry.h"
-#include "blackbox/blackbox.h"
 
 #include "flight/pid.h"
 #include "flight/imu.h"
@@ -453,9 +452,6 @@ void init(void)
     flashfsInit();
 #endif
 
-#ifdef BLACKBOX
-    initBlackbox();
-#endif
 
     previousTime = micros();
 
