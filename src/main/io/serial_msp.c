@@ -53,8 +53,6 @@
 #include "io/ledstrip.h"
 #include "io/flashfs.h"
 
-#include "telemetry/telemetry.h"
-
 #include "sensors/boardalignment.h"
 #include "sensors/sensors.h"
 #include "sensors/battery.h"
@@ -343,7 +341,6 @@ static const box_t boxes[CHECKBOX_ITEM_COUNT + 1] = {
     { BOXCALIB, "CALIB;", 17 },
     { BOXGOV, "GOVERNOR;", 18 },
     { BOXOSD, "OSD SW;", 19 },
-    { BOXTELEMETRY, "TELEMETRY;", 20 },
     { BOXGTUNE, "GTUNE;", 21 },
     { BOXSONAR, "SONAR;", 22 },
     { BOXSERVO1, "SERVO1;", 23 },
@@ -389,7 +386,6 @@ typedef enum {
 typedef enum {
     UNUSED_PORT = 0,
     FOR_GENERAL_MSP,
-    FOR_TELEMETRY
 } mspPortUsage_e;
 
 typedef struct mspPort_s {
@@ -678,9 +674,6 @@ void mspInit(serialConfig_t *serialConfig)
 
     activeBoxIds[activeBoxIdCount++] = BOXOSD;
 
-    if (feature(FEATURE_TELEMETRY) && masterConfig.telemetryConfig.telemetry_switch)
-        activeBoxIds[activeBoxIdCount++] = BOXTELEMETRY;
-
     if (feature(FEATURE_SONAR)){
         activeBoxIds[activeBoxIdCount++] = BOXSONAR;
     }
@@ -824,7 +817,6 @@ static bool processOutCommand(uint8_t cmdMSP)
             IS_ENABLED(IS_RC_MODE_ACTIVE(BOXCALIB)) << BOXCALIB |
             IS_ENABLED(IS_RC_MODE_ACTIVE(BOXGOV)) << BOXGOV |
             IS_ENABLED(IS_RC_MODE_ACTIVE(BOXOSD)) << BOXOSD |
-            IS_ENABLED(IS_RC_MODE_ACTIVE(BOXTELEMETRY)) << BOXTELEMETRY |
             IS_ENABLED(IS_RC_MODE_ACTIVE(BOXGTUNE)) << BOXGTUNE |
             IS_ENABLED(FLIGHT_MODE(SONAR_MODE)) << BOXSONAR |
             IS_ENABLED(ARMING_FLAG(ARMED)) << BOXARM |
@@ -1227,7 +1219,6 @@ static bool processOutCommand(uint8_t cmdMSP)
             serialize16(masterConfig.serialConfig.portConfigs[i].functionMask);
             serialize8(masterConfig.serialConfig.portConfigs[i].msp_baudrateIndex);
             serialize8(masterConfig.serialConfig.portConfigs[i].gps_baudrateIndex);
-            serialize8(masterConfig.serialConfig.portConfigs[i].telemetry_baudrateIndex);
             serialize8(masterConfig.serialConfig.portConfigs[i].blackbox_baudrateIndex);
         }
         break;
@@ -1686,7 +1677,6 @@ static bool processInCommand(void)
                 portConfig->functionMask = read16();
                 portConfig->msp_baudrateIndex = read8();
                 portConfig->gps_baudrateIndex = read8();
-                portConfig->telemetry_baudrateIndex = read8();
                 portConfig->blackbox_baudrateIndex = read8();
             }
         }
@@ -1874,71 +1864,3 @@ void mspProcess(void)
     }
 }
 
-static const uint8_t mspTelemetryCommandSequence[] = {
-    MSP_BOXNAMES,   // repeat boxnames, in case the first transmission was lost or never received.
-    MSP_STATUS,
-    MSP_IDENT,
-    MSP_RAW_IMU,
-    MSP_ALTITUDE,
-    MSP_RAW_GPS,
-    MSP_RC,
-    MSP_MOTOR_PINS,
-    MSP_ATTITUDE,
-    MSP_SERVO
-};
-
-#define TELEMETRY_MSP_COMMAND_SEQUENCE_ENTRY_COUNT (sizeof(mspTelemetryCommandSequence) / sizeof(mspTelemetryCommandSequence[0]))
-
-static mspPort_t *mspTelemetryPort = NULL;
-
-void mspSetTelemetryPort(serialPort_t *serialPort)
-{
-    uint8_t portIndex;
-    mspPort_t *candidatePort = NULL;
-    mspPort_t *matchedPort = NULL;
-
-    // find existing telemetry port
-    for (portIndex = 0; portIndex < MAX_MSP_PORT_COUNT; portIndex++) {
-        candidatePort = &mspPorts[portIndex];
-        if (candidatePort->mspPortUsage == FOR_TELEMETRY) {
-            matchedPort = candidatePort;
-            break;
-        }
-    }
-
-    if (!matchedPort) {
-        // find unused port
-        for (portIndex = 0; portIndex < MAX_MSP_PORT_COUNT; portIndex++) {
-            candidatePort = &mspPorts[portIndex];
-            if (candidatePort->mspPortUsage == UNUSED_PORT) {
-                matchedPort = candidatePort;
-                break;
-            }
-        }
-    }
-    mspTelemetryPort = matchedPort;
-    if (!mspTelemetryPort) {
-        return;
-    }
-
-    resetMspPort(mspTelemetryPort, serialPort, FOR_TELEMETRY);
-}
-
-void sendMspTelemetry(void)
-{
-    static uint32_t sequenceIndex = 0;
-
-    if (!mspTelemetryPort) {
-        return;
-    }
-
-    setCurrentPort(mspTelemetryPort);
-
-    processOutCommand(mspTelemetryCommandSequence[sequenceIndex]);
-    tailSerialReply();
-
-    sequenceIndex++;
-    if (sequenceIndex >= TELEMETRY_MSP_COMMAND_SEQUENCE_ENTRY_COUNT) {
-        sequenceIndex = 0;
-    }
-}

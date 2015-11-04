@@ -231,33 +231,6 @@ $(OBJECT_DIR)/gps_conversion_unittest : \
 	$(CXX) $(CXX_FLAGS) $^ -o $(OBJECT_DIR)/$@
 
 
-
-$(OBJECT_DIR)/telemetry/hott.o : \
-	$(USER_DIR)/telemetry/hott.c \
-	$(USER_DIR)/telemetry/hott.h \
-	$(GTEST_HEADERS)
-
-	@mkdir -p $(dir $@)
-	$(CC) $(C_FLAGS) $(TEST_CFLAGS) -c $(USER_DIR)/telemetry/hott.c -o $@
-
-$(OBJECT_DIR)/telemetry_hott_unittest.o : \
-	$(TEST_DIR)/telemetry_hott_unittest.cc \
-	$(USER_DIR)/telemetry/hott.h \
-	$(GTEST_HEADERS)
-
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXX_FLAGS) $(TEST_CFLAGS) -c $(TEST_DIR)/telemetry_hott_unittest.cc -o $@
-
-$(OBJECT_DIR)/telemetry_hott_unittest : \
-	$(OBJECT_DIR)/telemetry/hott.o \
-	$(OBJECT_DIR)/telemetry_hott_unittest.o \
-	$(OBJECT_DIR)/flight/gps_conversion.o \
-	$(OBJECT_DIR)/gtest_main.a
-
-	$(CXX) $(CXX_FLAGS) $^ -o $(OBJECT_DIR)/$@
-
-
-
 $(OBJECT_DIR)/io/rc_controls.o : \
 	$(USER_DIR)/io/rc_controls.c \
 	$(USER_DIR)/io/rc_controls.h \

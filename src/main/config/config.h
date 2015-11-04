@@ -33,7 +33,6 @@ typedef enum {
     FEATURE_GPS = 1 << 7,
     FEATURE_FAILSAFE = 1 << 8,
     FEATURE_SONAR = 1 << 9,
-    FEATURE_TELEMETRY = 1 << 10,
     FEATURE_CURRENT_METER = 1 << 11,
     FEATURE_3D = 1 << 12,
     FEATURE_RX_PARALLEL_PWM = 1 << 13,

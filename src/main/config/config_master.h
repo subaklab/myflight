@@ -82,8 +82,6 @@ typedef struct master_t {
 
     serialConfig_t serialConfig;
 
-    telemetryConfig_t telemetryConfig;
-
 #ifdef LED_STRIP
     ledConfig_t ledConfigs[MAX_LED_STRIP_LENGTH];
     hsvColor_t colors[CONFIGURABLE_COLOR_COUNT];

@@ -55,8 +55,6 @@
 
 #include "rx/rx.h"
 
-#include "telemetry/telemetry.h"
-
 #include "flight/mixer.h"
 #include "flight/pid.h"
 #include "flight/imu.h"
@@ -251,18 +249,6 @@ void resetFlight3DConfig(flight3DConfig_t *flight3DConfig)
     flight3DConfig->deadband3d_throttle = 50;
 }
 
-void resetTelemetryConfig(telemetryConfig_t *telemetryConfig)
-{
-    telemetryConfig->telemetry_inversion = 0;
-    telemetryConfig->telemetry_switch = 0;
-    telemetryConfig->gpsNoFixLatitude = 0;
-    telemetryConfig->gpsNoFixLongitude = 0;
-    telemetryConfig->frsky_coordinate_format = FRSKY_FORMAT_DMS;
-    telemetryConfig->frsky_unit = FRSKY_UNIT_METRICS;
-    telemetryConfig->frsky_vfas_precision = 0;
-    telemetryConfig->hottAlarmSoundInterval = 5;
-}
-
 void resetBatteryConfig(batteryConfig_t *batteryConfig)
 {
     batteryConfig->vbatscale = VBAT_SCALE_DEFAULT;
@@ -294,7 +280,6 @@ void resetSerialConfig(serialConfig_t *serialConfig)
         serialConfig->portConfigs[index].identifier = serialPortIdentifiers[index];
         serialConfig->portConfigs[index].msp_baudrateIndex = BAUD_115200;
         serialConfig->portConfigs[index].gps_baudrateIndex = BAUD_57600;
-        serialConfig->portConfigs[index].telemetry_baudrateIndex = BAUD_AUTO;
         serialConfig->portConfigs[index].blackbox_baudrateIndex = BAUD_115200;
     }
 
@@ -418,8 +403,6 @@ static void resetConf(void)
     masterConfig.baro_hardware = BARO_DEFAULT;   // default/autodetect
 
     resetBatteryConfig(&masterConfig.batteryConfig);
-
-    resetTelemetryConfig(&masterConfig.telemetryConfig);
 
     masterConfig.rxConfig.serialrx_provider = 0;
     masterConfig.rxConfig.spektrum_sat_bind = 0;
@@ -718,10 +701,6 @@ void activateConfig(void)
 
     useGyroConfig(&masterConfig.gyroConfig);
 
-#ifdef TELEMETRY
-    telemetryUseConfig(&masterConfig.telemetryConfig);
-#endif
-
     pidSetController(currentProfile->pidProfile.pidController);
 
 #ifdef GPS
@@ -842,11 +821,6 @@ void validateAndFixConfig(void)
     if (doesConfigurationUsePort(SERIAL_PORT_USART3) && feature(FEATURE_DISPLAY)) {
         featureClear(FEATURE_DISPLAY);
     }
-#endif
-
-#ifdef STM32F303xC
-    // hardware supports serial port inversion, make users life easier for those that want to connect SBus RX's
-    masterConfig.telemetryConfig.telemetry_inversion = 1;
 #endif
 
     /*

@@ -63,8 +63,6 @@
 #include "rx/rx.h"
 #include "rx/msp.h"
 
-#include "telemetry/telemetry.h"
-
 #include "flight/mixer.h"
 #include "flight/pid.h"
 #include "flight/imu.h"
@@ -278,10 +276,6 @@ void annexCode(void)
         warningLedUpdate();
     }
 
-#ifdef TELEMETRY
-    telemetryCheckState();
-#endif
-
     handleSerial();
 
 #ifdef GPS
@@ -301,16 +295,6 @@ void mwDisarm(void)
         DISABLE_ARMING_FLAG(ARMED);
 
         beeper(BEEPER_DISARMING);      // emit disarm tone
-    }
-}
-
-#define TELEMETRY_FUNCTION_MASK (FUNCTION_TELEMETRY_FRSKY | FUNCTION_TELEMETRY_HOTT | FUNCTION_TELEMETRY_MSP | FUNCTION_TELEMETRY_SMARTPORT)
-
-void releaseSharedTelemetryPorts(void) {
-    serialPort_t *sharedPort = findSharedSerialPort(TELEMETRY_FUNCTION_MASK, FUNCTION_MSP);
-    while (sharedPort) {
-        mspReleasePortIfAllocated(sharedPort);
-        sharedPort = findNextSharedSerialPort(TELEMETRY_FUNCTION_MASK, FUNCTION_MSP);
     }
 }
 
@@ -635,20 +619,6 @@ void processRx(void)
         DISABLE_FLIGHT_MODE(HEADFREE_MODE);
     }
 
-#ifdef TELEMETRY
-    if (feature(FEATURE_TELEMETRY)) {
-        if ((!masterConfig.telemetryConfig.telemetry_switch && ARMING_FLAG(ARMED)) ||
-                (masterConfig.telemetryConfig.telemetry_switch && IS_RC_MODE_ACTIVE(BOXTELEMETRY))) {
-
-            releaseSharedTelemetryPorts();
-        } else {
-            // the telemetry state must be checked immediately so that shared serial ports are released.
-            telemetryCheckState();
-            mspAllocateSerialPorts(&masterConfig.serialConfig);
-        }
-    }
-#endif
-
 }
 
 void filterRc(void){
@@ -829,11 +799,6 @@ void loop(void)
 
     }
 
-#ifdef TELEMETRY
-    if (!cliMode && feature(FEATURE_TELEMETRY)) {
-        telemetryProcess(&masterConfig.rxConfig, masterConfig.flight3DConfig.deadband3d_throttle);
-    }
-#endif
 
 #ifdef LED_STRIP
     if (feature(FEATURE_LED_STRIP)) {

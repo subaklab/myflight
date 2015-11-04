@@ -70,8 +70,6 @@
 #include "sensors/boardalignment.h"
 #include "sensors/initialisation.h"
 
-#include "telemetry/telemetry.h"
-
 #include "flight/pid.h"
 #include "flight/imu.h"
 #include "flight/mixer.h"
@@ -99,7 +97,6 @@ serialPort_t *loopbackPort;
 
 void printfSupportInit(void);
 void timerInit(void);
-void telemetryInit(void);
 void serialInit(serialConfig_t *initialSerialConfig, bool softserialEnabled);
 void mspInit(serialConfig_t *serialConfig);
 void cliInit(serialConfig_t *serialConfig);
@@ -431,12 +428,6 @@ void init(void)
 
     if (feature(FEATURE_LED_STRIP)) {
         ledStripEnable();
-    }
-#endif
-
-#ifdef TELEMETRY
-    if (feature(FEATURE_TELEMETRY)) {
-        telemetryInit();
     }
 #endif
 
